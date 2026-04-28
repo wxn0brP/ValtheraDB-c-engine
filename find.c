@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <jansson.h>
 #include <string.h>
+#include <dirent.h>
+#include <stdbool.h>
+#include <sys/stat.h>
+#include <jansson.h>
 #include "has_fields.h"
 #include "find.h"
 
@@ -17,100 +20,157 @@ static void buf_init(Buffer *b)
     b->cap = 1024;
     b->len = 0;
     b->data = (char *)malloc(b->cap);
-    b->data[0] = '\0';
+    if (b->data)
+        b->data[0] = '\0';
 }
 
 static void buf_append(Buffer *b, const char *s)
 {
     size_t slen = strlen(s);
-
     if (b->len + slen + 1 > b->cap)
     {
         while (b->len + slen + 1 > b->cap)
             b->cap *= 2;
-
-        b->data = (char *)realloc(b->data, b->cap);
+        char *new_data = (char *)realloc(b->data, b->cap);
+        if (!new_data)
+            return;
+        b->data = new_data;
     }
-
-    memcpy(b->data + b->len, s, slen);
-    b->len += slen;
-    b->data[b->len] = '\0';
+    if (b->data)
+    {
+        memcpy(b->data + b->len, s, slen);
+        b->len += slen;
+        b->data[b->len] = '\0';
+    }
 }
 
-char *find(const char *file, const char *fields_s, bool findOne)
+bool find_on_file(
+    const char *file,
+    json_t *fields,
+    bool findOne,
+    json_error_t *error,
+    Buffer *out,
+    bool *first)
 {
-    json_error_t error;
-
-    json_t *fields = json_loads(fields_s, 0, &error);
-    if (!fields)
-    {
-        char *res = malloc(3);
-        strcpy(res, "c1");
-        return res;
-    }
-
     FILE *f = fopen(file, "r");
     if (!f)
     {
+        return false;
+    }
+
+    char line[4096];
+    while (fgets(line, sizeof(line), f))
+    {
+        line[strcspn(line, "\r\n")] = 0;
+        if (line[0] == '\0')
+            continue;
+
+        json_t *json = json_loads(line, 0, error);
+        if (!json)
+            continue;
+
+        if (has_fields_advanced(json, fields) > 0)
+        {
+            if (!findOne)
+            {
+                if (!*first)
+                {
+                    buf_append(out, ",");
+                }
+                else
+                {
+                    *first = false;
+                }
+            }
+            buf_append(out, line);
+            json_decref(json);
+
+            if (findOne)
+            {
+                fclose(f);
+                return true;
+            }
+        }
+        json_decref(json);
+    }
+
+    fclose(f);
+    return false;
+}
+
+char *find(const char *dir, const char *fields_json, bool findOne)
+{
+    json_error_t error;
+
+    json_t *fields = json_loads(fields_json, 0, &error);
+    if (!fields)
+    {
+        char *res = malloc(256);
+        if (res)
+            strcpy(res, "2: Invalid fields JSON");
+        return res;
+    }
+
+    DIR *d = opendir(dir);
+    if (!d)
+    {
         json_decref(fields);
-        char *res = malloc(3);
-        strcpy(res, "c2");
+        char *res = malloc(256);
+        if (res)
+            strcpy(res, "3: Directory not found");
         return res;
     }
 
     Buffer out;
     buf_init(&out);
+    bool first = true;
 
     if (!findOne)
         buf_append(&out, "[");
 
-    bool first = 1;
+    struct dirent *entry;
+    bool found = false;
 
-    char line[1024 * 4];
-
-    while (fgets(line, sizeof(line), f))
+    while ((entry = readdir(d)) != NULL)
     {
-        line[strcspn(line, "\r\n")] = 0;
-
-        if (line[0] == '\0')
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
             continue;
 
-        json_t *json = json_loads(line, 0, &error);
-        if (!json)
-        {
+        char filepath[4096];
+        int written = snprintf(filepath, sizeof(filepath), "%s/%s", dir, entry->d_name);
+        if (written < 0 || written >= (int)sizeof(filepath))
             continue;
-        }
 
-        int result = has_fields_advanced(json, fields);
+        struct stat st;
+        if (stat(filepath, &st) != 0 || !S_ISREG(st.st_mode))
+            continue;
 
-        if (result > 0)
+        if (strcmp(filepath + strlen(filepath) - 3, ".db") != 0)
+            continue;
+
+        if (find_on_file(filepath, fields, findOne, &error, &out, &first))
         {
-            if (!findOne)
-            {
-                if (!first)
-                    buf_append(&out, ",");
-                else
-                    first = 0;
-            }
-
-            buf_append(&out, line);
-
-            json_decref(json);
-
+            found = true;
             if (findOne)
                 break;
         }
-        else
-        {
-            json_decref(json);
-        }
     }
 
-    fclose(f);
+    closedir(d);
     json_decref(fields);
 
     if (!findOne)
+    {
         buf_append(&out, "]");
+    }
+    else if (!found)
+    {
+        free(out.data);
+        char *null_res = malloc(6);
+        if (null_res)
+            strcpy(null_res, "null");
+        return null_res;
+    }
 
     return out.data;
 }

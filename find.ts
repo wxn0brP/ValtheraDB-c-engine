@@ -1,3 +1,4 @@
+/// <reference path="/ppr/node_modules/bun-types/index.d.ts" />
 import { CString, dlopen, FFIType } from "bun:ffi";
 
 const lib = dlopen("./libfind.so", {
@@ -19,10 +20,12 @@ function find(file: string, fields: object, findOne = false) {
     const json = JSON.stringify(fields);
 
     const ptr = lib.symbols.find(encode(file), encode(json), findOne);
+    if (!ptr)
+        throw new Error("Error. Pointer is null");
     const result = new CString(ptr).toString();
 
     lib.symbols.free_result(ptr);
     return result;
 }
 
-console.log(find("./test.jsonl", { id: 1_999_999 }, true));
+console.log(find("./data", { $gt: { age: 200 } }, false));
