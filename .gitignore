@@ -1,7 +1,12 @@
 *.jsonl
 *.so
 *.o
-vdb
 /data
 .suglite_history
 .vscode
+build/
+bin/
+lib/
+node_modules
+bun.lock
+test.ts

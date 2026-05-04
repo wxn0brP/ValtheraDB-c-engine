@@ -1,6 +1,6 @@
 {
-    cmd: "make",
+    cmd: "./build.sh",
     watch: [
-        "*.c"
+        "src"
     ],
 }
