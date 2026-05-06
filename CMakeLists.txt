@@ -11,8 +11,8 @@ pkg_check_modules(JANSSON REQUIRED jansson)
 
 include_directories(${JANSSON_INCLUDE_DIRS} src)
 
-file(GLOB SOURCES "src/*.c")
-file(GLOB HEADERS "src/*.h")
+file(GLOB_RECURSE SOURCES "src/*.c")
+file(GLOB_RECURSE HEADERS "src/*.h")
 
 add_library(valtheradb SHARED ${SOURCES} ${HEADERS})
 

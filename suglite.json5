@@ -1,5 +1,5 @@
 {
-    cmd: "./build.sh",
+    cmd: "cd build && make",
     watch: [
         "src"
     ],
