@@ -1,9 +1,10 @@
-import { FileActions } from "@wxn0brp/db-storage-dir/action";
-import { DbDirOpts } from "@wxn0brp/db-storage-dir/types";
 import { FileCpu } from "@wxn0brp/db-core/types/fileCpu";
 import { VQueryT } from "@wxn0brp/db-core/types/query";
-import { find } from "./native";
 import { findUtil } from "@wxn0brp/db-core/utils/action";
+import { vFileCpu } from "@wxn0brp/db-storage-dir";
+import { FileActions } from "@wxn0brp/db-storage-dir/action";
+import { DbDirOpts } from "@wxn0brp/db-storage-dir/types";
+import { find } from "./native";
 
 export class NativeActions extends FileActions {
     constructor(
@@ -38,4 +39,8 @@ export class NativeActions extends FileActions {
         const data = find(c_path, query.search, true);
         return data || null;
     }
+}
+
+export const DYNAMIC = {
+    "dir-c": (folder: string, options: DbDirOpts = {}) => new NativeActions(folder, options, vFileCpu)
 }
