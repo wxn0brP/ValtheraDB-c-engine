@@ -1,6 +1,8 @@
 import { CString, dlopen, FFIType } from "bun:ffi";
+import { join } from "path";
 
-const lib = dlopen("./lib/libvaltheradb.so", {
+const path = join(import.meta.dir, "..", "lib", "libvaltheradb.so");
+const lib = dlopen(path, {
     find: {
         args: [FFIType.cstring, FFIType.cstring, FFIType.bool],
         returns: FFIType.ptr
