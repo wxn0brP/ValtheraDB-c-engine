@@ -7,6 +7,14 @@ const lib = dlopen(path, {
         args: [FFIType.cstring, FFIType.cstring, FFIType.bool],
         returns: FFIType.ptr
     },
+    find_paged: {
+        args: [FFIType.cstring, FFIType.cstring, FFIType.int32_t, FFIType.int32_t],
+        returns: FFIType.ptr
+    },
+    remove_entries: {
+        args: [FFIType.cstring, FFIType.cstring, FFIType.bool],
+        returns: FFIType.ptr
+    },
     free_result: {
         args: [FFIType.ptr],
         returns: FFIType.void
@@ -19,10 +27,7 @@ function encode(str: string) {
     return encoder.encode(str + "\0");
 }
 
-export function find(dir: string, fields: object, findOne = false) {
-    const json = JSON.stringify(fields);
-
-    const ptr = lib.symbols.find(encode(dir), encode(json), findOne);
+function parseResult(ptr: any) {
     if (!ptr)
         throw new Error("Error. Pointer is null");
 
@@ -35,4 +40,24 @@ export function find(dir: string, fields: object, findOne = false) {
     }
 
     return JSON.parse(result);
+}
+
+function callJson(symbol: "find" | "remove_entries", dir: string, fields: unknown, flag: boolean) {
+    const json = JSON.stringify(fields ?? {});
+    const ptr = lib.symbols[symbol](encode(dir), encode(json), flag);
+    return parseResult(ptr);
+}
+
+export function find(dir: string, fields: unknown, findOne = false) {
+    return callJson("find", dir, fields, findOne);
+}
+
+export function findPaged(dir: string, fields: unknown, offset: number, limit: number) {
+    const json = JSON.stringify(fields ?? {});
+    const ptr = lib.symbols.find_paged(encode(dir), encode(json), offset, limit);
+    return parseResult(ptr);
+}
+
+export function remove(dir: string, fields: unknown, one = false) {
+    return callJson("remove_entries", dir, fields, one);
 }

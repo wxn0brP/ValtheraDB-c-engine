@@ -8,6 +8,8 @@ Currently only:
 
 - `find`
 - `findOne`
+- `remove`
+- `removeOne`
 
 are implemented in native C. Other operations fall back to TS implementation.
 
