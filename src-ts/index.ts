@@ -22,12 +22,7 @@ export class NativeActions extends FileActions {
         const c_path = this._getCollectionPath(query.collection);
 
         const data = find(c_path, query.search, false);
-        // TODO update when new core release
-        const res = await findUtil(query, {
-            find() {
-                return data;
-            }
-        } as any, [""]);
+        const res = await findUtil(query, data, [""]);
         return res || [];
     }
 

@@ -13,8 +13,10 @@ const lib = dlopen(path, {
     }
 });
 
+const encoder = new TextEncoder();
+
 function encode(str: string) {
-    return new TextEncoder().encode(str + "\0");
+    return encoder.encode(str + "\0");
 }
 
 export function find(dir: string, fields: object, findOne = false) {
@@ -23,8 +25,14 @@ export function find(dir: string, fields: object, findOne = false) {
     const ptr = lib.symbols.find(encode(dir), encode(json), findOne);
     if (!ptr)
         throw new Error("Error. Pointer is null");
-    const result = new CString(ptr).toString();
 
-    lib.symbols.free_result(ptr);
+    let result: string;
+
+    try {
+        result = new CString(ptr).toString();
+    } finally {
+        lib.symbols.free_result(ptr);
+    }
+
     return JSON.parse(result);
 }
