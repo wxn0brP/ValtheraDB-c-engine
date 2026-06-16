@@ -10,8 +10,11 @@ Currently only:
 - `findOne`
 - `remove`
 - `removeOne`
+- `update`
+- `updateOne`
+- `updateOneOrAdd`
 
-are implemented in native C. Other operations fall back to TS implementation.
+are partially implemented in native C. Other operations fall back to TS implementation.
 
 ## Installation
 

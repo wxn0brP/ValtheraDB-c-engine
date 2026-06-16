@@ -15,6 +15,10 @@ const lib = dlopen(path, {
         args: [FFIType.cstring, FFIType.cstring, FFIType.bool],
         returns: FFIType.ptr
     },
+    update_entries: {
+        args: [FFIType.cstring, FFIType.cstring, FFIType.cstring, FFIType.bool],
+        returns: FFIType.ptr
+    },
     free_result: {
         args: [FFIType.ptr],
         returns: FFIType.void
@@ -60,4 +64,11 @@ export function findPaged(dir: string, fields: unknown, offset: number, limit: n
 
 export function remove(dir: string, fields: unknown, one = false) {
     return callJson("remove_entries", dir, fields, one);
+}
+
+export function update(dir: string, fields: unknown, updater: unknown, one = false) {
+    const fieldsJson = JSON.stringify(fields ?? {});
+    const updaterJson = JSON.stringify(updater ?? {});
+    const ptr = lib.symbols.update_entries(encode(dir), encode(fieldsJson), encode(updaterJson), one);
+    return parseResult(ptr);
 }
