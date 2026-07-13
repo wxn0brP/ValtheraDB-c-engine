@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <regex.h>
 #include "conditions.h"
 #include "array_helpers.h"
 #include "utils/id.h"
@@ -146,13 +148,30 @@ int check_condition(json_t *obj, const char *op, json_t *condition_obj)
                 actual_type = "null";
                 break;
             }
-            if (actual_type == NULL || strcmp(actual_type, expected_type) != 0)
+            if (actual_type == NULL)
+                return 0;
+            if (strcmp(expected_type, "number") == 0)
+            {
+                if (strcmp(actual_type, "integer") != 0 && strcmp(actual_type, "real") != 0)
+                    return 0;
+            }
+            else if (strcmp(actual_type, expected_type) != 0)
                 return 0;
         }
         else if (strcmp(op, "$regex") == 0)
         {
-            fprintf(stderr, "Regex is not implemented in C version.\n");
-            return 0;
+            if (!json_is_string(target_value) || !json_is_string(value))
+                return 0;
+            const char *text = json_string_value(target_value);
+            const char *pattern = json_string_value(value);
+            regex_t regex;
+            int ret = regcomp(&regex, pattern, REG_EXTENDED | REG_NOSUB);
+            if (ret != 0)
+                return 0;
+            ret = regexec(&regex, text, 0, NULL, 0);
+            regfree(&regex);
+            if (ret != 0)
+                return 0;
         }
         else if (strcmp(op, "$size") == 0)
         {
