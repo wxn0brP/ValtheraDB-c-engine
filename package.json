@@ -19,7 +19,7 @@
     "type": "module",
     "devDependencies": {
         "@types/bun": "*",
-        "@wxn0brp/db-core": "^0.11.2",
+        "@wxn0brp/db-core": "^0.12.0",
         "@wxn0brp/db-storage-dir": "^0.110.1",
         "typescript": "^6"
     },
