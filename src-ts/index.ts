@@ -97,6 +97,8 @@ export class NativeActions extends FileActions {
         super(folder, options, fileCpu);
     }
 
+    version = "0.120.1-native";
+
     _canUseNative(query: VQueryT.Find | VQueryT.FindOne | VQueryT.Remove) {
         const format = this.options.format;
         if (format !== "json") return false;
