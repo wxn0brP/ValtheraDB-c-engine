@@ -17,14 +17,13 @@
         "arm64"
     ],
     "type": "module",
+    "dependencies": {
+        "@wxn0brp/db-core": "^0.12.2",
+        "@wxn0brp/db-storage-dir": "^0.120.2"
+    },
     "devDependencies": {
         "@types/bun": "*",
-        "@wxn0brp/db-core": "^0.12.0",
-        "@wxn0brp/db-storage-dir": "^0.120.0",
         "typescript": "^7"
-    },
-    "peerDependencies": {
-        "@wxn0brp/db-core": "^0.12.0"
     },
     "files": [
         "src-ts",
