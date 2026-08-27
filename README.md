@@ -39,7 +39,7 @@ const adapter = new NativeActions(
     vFileCpu
 )
 
-const db = new ValtheraClass({ dbAction: adapter });
+const db = new ValtheraClass({ adapter });
 ```
 
 ## Requirements
